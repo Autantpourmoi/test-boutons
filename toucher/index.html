@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Le petit coup léger</title>
+<style>
+  :root {
+    --fond: #fff7ec;
+    --texte: #2b2b2b;
+    --orange: #d9822b;
+    --vert: #1d6b4a;
+    --vert-clair: #e3f1ea;
+    --doux: #8a4b0c;
+    --doux-fond: #fdf0e1;
+    --lampe-off: #d8d2c8;
+    --lampe-on: #ffc94a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--fond); color: var(--texte);
+    font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-size: 21px; line-height: 1.35; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+    transition: background-color .8s;
+  }
+  body.piece-eclairee { background: #fff1c9; }
+  /* Hauteur = partie vraiment visible (barres du navigateur déduites). */
+  .ecran { position: fixed; top: 0; left: 0; right: 0; height: 100vh; height: 100dvh; display: none; flex-direction: column; align-items: center; padding: calc(env(safe-area-inset-top) + 24px) 22px calc(env(safe-area-inset-bottom) + 20px); text-align: center; gap: 16px; }
+  .ecran.actif { display: flex; }
+  h1 { font-size: 28px; margin: 0; }
+  p { margin: 0; }
+  .centre { justify-content: center; }
+  .gros-bouton { font: inherit; font-size: 23px; font-weight: 700; border: 0; border-radius: 16px; padding: 18px 24px; background: var(--vert); color: #fff; width: 100%; max-width: 420px; flex: none; }
+  .consigne { font-size: 23px; font-weight: 600; }
+  .zone { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; touch-action: none; }
+  .message { min-height: 3.2em; font-size: 20px; border-radius: 12px; padding: 10px 14px; width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: center; }
+  .message.conseil { background: var(--doux-fond); color: var(--doux); }
+  .message.bravo { background: var(--vert-clair); color: var(--vert); font-weight: 600; }
+
+  /* La sonnette */
+  #sonnette { width: min(60vw, 240px); height: min(60vw, 240px); border-radius: 50%; background: #fff; box-shadow: 0 6px 0 #e3c9a4, 0 10px 24px rgba(0,0,0,.12); display: flex; align-items: center; justify-content: center; }
+  #sonnette svg { width: 55%; height: 55%; }
+  #sonnette.sonne svg { animation: secoue .5s; }
+  @keyframes secoue { 0%,100% { transform: rotate(0) } 20% { transform: rotate(-14deg) } 40% { transform: rotate(12deg) } 60% { transform: rotate(-8deg) } 80% { transform: rotate(5deg) } }
+  .ding { font-size: 30px; font-weight: 700; color: var(--orange); height: 1.2em; }
+  .points { display: flex; gap: 10px; }
+  .points span { width: 18px; height: 18px; border-radius: 50%; background: var(--lampe-off); }
+  .points span.fait { background: var(--vert); }
+
+  /* Les lampes, de plus en plus petites */
+  .lampes { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 22px; }
+  .lampe { border-radius: 50%; background: var(--lampe-off); display: flex; align-items: center; justify-content: center; transition: background-color .3s, box-shadow .3s; }
+  .lampe svg { width: 58%; height: 58%; }
+  .lampe.allumee { background: var(--lampe-on); box-shadow: 0 0 28px 10px rgba(255,201,74,.7); }
+
+  #detail { display: none; text-align: left; font-size: 14px; background: #fff; border-radius: 12px; padding: 12px; max-height: 40vh; overflow: auto; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; width: 100%; }
+  .lien-discret { font: inherit; background: none; border: 0; color: #777; font-size: 16px; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- Accueil -->
+<section class="ecran centre actif" id="accueil">
+  <h1>Le petit coup léger</h1>
+  <p>Sur un écran de téléphone, on n'appuie pas : <b>on tapote</b>.</p>
+  <p>Un petit coup léger, comme pour tapoter l'épaule de quelqu'un, et on retire le doigt tout de suite.</p>
+  <p>Appuyer fort ne sert à rien. Rien ne peut se casser.</p>
+  <button class="gros-bouton" data-aller="sonnette-ecran">Commencer</button>
+</section>
+
+<!-- 1. La sonnette -->
+<section class="ecran" id="sonnette-ecran">
+  <p class="consigne">Tapotez la sonnette, d'un petit coup léger.</p>
+  <div class="points" id="points-sonnette"><span></span><span></span><span></span></div>
+  <div class="zone" id="zone-sonnette">
+    <div id="sonnette" data-cible="sonnette">
+      <svg viewBox="0 0 64 64" fill="none" stroke="#d9822b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 44V30a16 16 0 0 1 32 0v14l4 5H12z"/><path d="M27 54a5 5 0 0 0 10 0"/><path d="M32 10v4"/></svg>
+    </div>
+  </div>
+  <div class="ding" id="ding"></div>
+  <div class="message" id="msg-sonnette"></div>
+  <button class="gros-bouton" id="suite-sonnette" data-aller="lampes-ecran" style="visibility:hidden">Continuer</button>
+</section>
+
+<!-- 2. Les lampes -->
+<section class="ecran" id="lampes-ecran">
+  <p class="consigne">Allumez les lampes, une par une, d'un petit coup léger.</p>
+  <div class="zone" id="zone-lampes"><div class="lampes" id="lampes"></div></div>
+  <div class="message" id="msg-lampes"></div>
+  <button class="gros-bouton" id="suite-lampes" style="visibility:hidden">Continuer</button>
+</section>
+
+<!-- Fin -->
+<section class="ecran centre" id="fin">
+  <h1>Merci, c'est fini !</h1>
+  <p>Vous savez maintenant tapoter un écran.</p>
+  <p id="phrase-envoi">Touchez le bouton vert pour envoyer le résultat à Luc par message.</p>
+  <button class="gros-bouton" id="envoyer">Envoyer à Luc</button>
+  <button class="lien-discret" id="voir">Voir le détail</button>
+  <div id="detail"></div>
+</section>
+
+<script>
+// Réglages du geste. Au-delà de LONG ms, l'iPhone commence à traiter le toucher comme un appui long.
+const LONG = 450;      // ms
+const GLISSE = 14;     // px : au-delà, le doigt a glissé
+const TAILLES = [130, 110, 90, 70, 52]; // lampes de plus en plus petites ; 52 px ≈ un vrai bouton de téléphone
+
+const touchers = []; // { exo, duree, glisse, resultat }
+const $ = (id) => document.getElementById(id);
+function montrer(id) { document.querySelectorAll(".ecran").forEach(e => e.classList.toggle("actif", e.id === id)); }
+
+// --- Son de sonnette (Web Audio). Sur iPhone, l'interrupteur de silence peut le couper : le visuel suffit.
+let audio = null;
+function ding() {
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    [[880, 0], [660, .18]].forEach(([f, t]) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = f; o.type = "sine";
+      g.gain.setValueAtTime(0.0001, audio.currentTime + t);
+      g.gain.exponentialRampToValueAtTime(0.4, audio.currentTime + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + t + 0.6);
+      o.connect(g).connect(audio.destination); o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.65);
+    });
+  } catch (e) {}
+}
+
+// --- Mesure d'un toucher : durée entre poser et retirer le doigt, et distance parcourue.
+function ecouter(zone, exo, surBonToucher, msg) {
+  let t0 = 0, x0 = 0, y0 = 0, cible = null, actif = false;
+  zone.addEventListener("pointerdown", (e) => {
+    actif = true; t0 = performance.now(); x0 = e.clientX; y0 = e.clientY;
+    cible = e.target.closest("[data-cible]");
+  });
+  const fin = (e) => {
+    if (!actif) return; actif = false;
+    const duree = Math.round(performance.now() - t0);
+    const glisse = Math.round(Math.hypot(e.clientX - x0, e.clientY - y0));
+    let resultat;
+    if (!cible) resultat = "a-cote";
+    else if (glisse > GLISSE) resultat = "glisse";
+    else if (duree > LONG) resultat = "long";
+    else resultat = "ok";
+    touchers.push({ exo, duree, glisse, resultat });
+    if (resultat === "ok") { msg.className = "message"; msg.textContent = ""; surBonToucher(cible); }
+    else conseil(msg, resultat);
+  };
+  zone.addEventListener("pointerup", fin);
+  zone.addEventListener("pointercancel", fin);
+}
+
+function conseil(msg, resultat) {
+  const textes = {
+    long: "Vous avez laissé le doigt un peu longtemps. Essayez un petit coup, comme pour tapoter une épaule.",
+    glisse: "Le doigt a un peu glissé. Posez-le et retirez-le tout de suite, sans bouger.",
+    "a-cote": "Presque ! Visez bien le milieu, puis un petit coup léger.",
+  };
+  msg.className = "message conseil"; msg.textContent = textes[resultat];
+}
+
+// --- 1. La sonnette : 3 bons petits coups.
+let dings = 0;
+ecouter($("zone-sonnette"), "sonnette", () => {
+  dings++;
+  ding();
+  const s = $("sonnette"); s.classList.remove("sonne"); void s.offsetWidth; s.classList.add("sonne");
+  $("ding").textContent = "Ding !"; setTimeout(() => { $("ding").textContent = ""; }, 700);
+  document.querySelectorAll("#points-sonnette span").forEach((p, i) => p.classList.toggle("fait", i < dings));
+  if (dings >= 3) {
+    const m = $("msg-sonnette"); m.className = "message bravo"; m.textContent = "C'est exactement ça : un petit coup léger.";
+    $("suite-sonnette").style.visibility = "visible";
+  }
+}, $("msg-sonnette"));
+
+// --- 2. Les lampes : une par une, de plus en plus petites.
+const svgLampe = `<svg viewBox="0 0 64 64" fill="none" stroke="#5a4a2f" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 36a14 14 0 1 1 20 0c-3 3-4 5-4 9H26c0-4-1-6-4-9z"/><path d="M26 51h12M28 57h8"/></svg>`;
+$("lampes").innerHTML = TAILLES.map((t, i) => `<div class="lampe" data-cible="lampe-${i}" style="width:${t}px;height:${t}px">${svgLampe}</div>`).join("");
+let allumees = 0;
+ecouter($("zone-lampes"), "lampes", (cible) => {
+  if (cible.classList.contains("allumee")) return;
+  cible.classList.add("allumee"); allumees++;
+  if (allumees === TAILLES.length) {
+    document.body.classList.add("piece-eclairee");
+    const m = $("msg-lampes"); m.className = "message bravo"; m.textContent = "Toutes les lampes sont allumées !";
+    $("suite-lampes").style.visibility = "visible";
+  }
+}, $("msg-lampes"));
+
+// --- Résumé pour Luc
+function resume() {
+  const lignes = ["TEST TOUCHER LÉGER"];
+  for (const exo of ["sonnette", "lampes"]) {
+    const t = touchers.filter(x => x.exo === exo);
+    const n = (r) => t.filter(x => x.resultat === r).length;
+    const ok = t.filter(x => x.resultat === "ok").map(x => x.duree).sort((a, b) => a - b);
+    const med = ok.length ? ok[Math.floor(ok.length / 2)] : "-";
+    lignes.push(`${exo}: ${t.length} touchers | ok ${n("ok")} | trop long ${n("long")} | glissé ${n("glisse")} | à côté ${n("a-cote")} | durée médiane ok ${med} ms`);
+  }
+  lignes.push("détail (exo durée ms / glissé px / résultat) :");
+  touchers.forEach(x => lignes.push(`${x.exo[0]} ${x.duree} ${x.glisse} ${x.resultat}`));
+  return lignes.join("\n");
+}
+
+function terminer() {
+  const texte = resume();
+  $("detail").textContent = texte;
+  try { localStorage.setItem("test-toucher-" + Date.now(), texte); } catch (e) {}
+  const luc = (location.hash.match(/luc=([+0-9]+)/) || [])[1];
+  if (!luc) { $("envoyer").style.display = "none"; $("phrase-envoi").textContent = "Montrez cet écran à Luc."; $("detail").style.display = "block"; $("voir").style.display = "none"; }
+  $("envoyer").onclick = () => { location.href = `sms:${luc}&body=${encodeURIComponent(texte)}`; };
+  montrer("fin");
+}
+
+// Les boutons de navigation réagissent à tout toucher, même long : on ne bloque jamais la personne entre deux exercices.
+document.querySelectorAll("[data-aller]").forEach(b => b.addEventListener("pointerup", () => montrer(b.dataset.aller)));
+$("suite-lampes").addEventListener("pointerup", terminer);
+$("voir").onclick = () => { const d = $("detail"); d.style.display = d.style.display === "block" ? "none" : "block"; };
+</script>
+</body>
+</html>
