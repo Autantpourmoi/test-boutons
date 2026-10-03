@@ -92,7 +92,7 @@
 <!-- Accueil -->
 <section class="ecran page-calme actif" id="accueil">
   <h1>Petit test pour Luc</h1>
-  <p>Vous allez voir une douzaine d'écrans de téléphone.</p>
+  <p>Vous allez voir une quinzaine d'écrans de téléphone.</p>
   <p>Sur chacun, une phrase en haut vous dit <b>quoi toucher</b>.</p>
   <p>Prenez votre temps. <b>Ce n'est pas vous qu'on teste, ce sont les écrans.</b></p>
   <button class="gros-bouton" id="commencer">Commencer</button>
@@ -137,6 +137,17 @@ const VARIANTES = [
   { id: "orange-geant-bas",   pos: "bas",    cls: "v-plein v-large c-orange v-geant" },
 ];
 
+// Le mot du bouton change d'un écran à l'autre, pour qu'on lise la consigne au lieu de repérer un mot.
+const MOTS = ["Continuer", "Suivant", "J'ai compris", "Voir la suite", "Commencer", "Terminé"];
+
+// Écrans d'attention : deux boutons qui se ressemblent, la consigne en demande un seul.
+// Toucher l'autre = « piège » (on a repéré un bouton sans lire la consigne).
+const ATTENTION = [
+  { id: "attention-suivant",   mot: "Suivant",      leurre: "Continuer" },
+  { id: "attention-compris",   mot: "J'ai compris", leurre: "Voir la suite" },
+  { id: "attention-continuer", mot: "Continuer",    leurre: "Suivant" },
+];
+
 // Des contenus variés pour que les écrans ne se ressemblent pas (rien d'inquiétant, rien qui imite une arnaque).
 const CONTENUS = [
   { titre: "Météo", h: "Demain à Rennes", p: "Éclaircies l'après-midi, 17 degrés. Pensez à prendre une petite veste le matin.", carte: ["Samedi", "Soleil et nuages"], couleur: "#ffd27a" },
@@ -151,15 +162,21 @@ const CONTENUS = [
   { titre: "Randonnée", h: "La balade du dimanche", p: "Un parcours plat de 5 kilomètres le long du canal, départ devant l'église.", carte: ["Durée", "1 h 30 à pied"], couleur: "#a9d6d3" },
   { titre: "Famille", h: "L'anniversaire de Léa", p: "N'oubliez pas : Léa fête ses 9 ans dimanche. Elle adore les livres sur les animaux.", carte: ["Dimanche", "À 12 h"], couleur: "#f9cba7" },
   { titre: "Santé", h: "Bien dormir", p: "Quelques conseils simples : se coucher à heure fixe et éviter les écrans le soir.", carte: ["Article", "3 minutes de lecture"], couleur: "#c5d8f2" },
+  { titre: "Voyage", h: "Le train de mardi", p: "Votre train part à 9 h 12, voie 3. Arrivez un peu en avance pour trouver votre place tranquillement.", carte: ["Voiture 7", "Place 42"], couleur: "#bfe3c0" },
+  { titre: "Club", h: "L'après-midi jeux", p: "Belote, scrabble et goûter jeudi à partir de 14 heures, à la salle des fêtes.", carte: ["Jeudi", "De 14 h à 17 h"], couleur: "#f3d1a2" },
+  { titre: "Musique", h: "Le concert de l'église", p: "Un concert de chorale dimanche à 16 heures. Entrée libre, participation au chapeau.", carte: ["Dimanche", "À 16 h"], couleur: "#d9c7ef" },
 ];
-
-const MOT = "Continuer";
 const ATTENTE_MAX = 30000; // 30 secondes sans trouver : on passe, sans reproche
 const ICONES = `<span class="icones"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/></svg><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></svg></span>`;
 
 function melanger(t) { t = t.slice(); for (let i = t.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [t[i], t[j]] = [t[j], t[i]]; } return t; }
 
-const ordre = melanger(VARIANTES);
+// Chaque variante reçoit un mot au hasard, sans que deux écrans qui se suivent aient forcément le même.
+const motsTires = melanger(MOTS.concat(MOTS));
+const ordre = melanger(
+  VARIANTES.map((v, i) => ({ ...v, mot: motsTires[i % motsTires.length] }))
+    .concat(ATTENTION.map(a => ({ ...a, pos: "bas", cls: "v-plein v-large c-orange" })))
+);
 const contenus = melanger(CONTENUS);
 const resultats = [];
 let n = 0, debut = 0, rates = [], minuteur = null, fini = false;
@@ -169,11 +186,13 @@ function montrer(id) { document.querySelectorAll(".ecran").forEach(e => e.classL
 
 function boutonCible(v) {
   const fleche = v.fleche ? " &rarr;" : "";
-  return `<button class="cible ${v.cls}" data-cible="1">${MOT}${fleche}</button>`;
+  return `<button class="cible ${v.cls}" data-cible="1">${v.mot}${fleche}</button>`;
 }
 
 function construire(v, c) {
-  const cible = boutonCible(v);
+  // Sur les écrans d'attention, le leurre a exactement la même apparence et se place au-dessus.
+  const leurre = v.leurre ? `<button class="cible ${v.cls}" data-quoi="PIÈGE-${v.leurre}">${v.leurre}</button>` : "";
+  const cible = leurre + boutonCible(v);
   const haut = v.pos === "haut" ? `<div style="padding:12px 16px 0">${cible}</div>` : "";
   const milieu = v.pos === "milieu" ? `<div>${cible}</div>` : "";
   const bas = v.pos === "bas" ? cible : "";
@@ -196,7 +215,7 @@ function construire(v, c) {
 function essai() {
   if (n >= ordre.length) return terminer();
   const v = ordre[n], c = contenus[n % contenus.length];
-  $("consigne").textContent = `Touchez le bouton « ${MOT} »`;
+  $("consigne").textContent = `Touchez le bouton « ${v.mot} »`;
   $("faux").innerHTML = construire(v, c);
   rates = [];
   montrer("essai");
@@ -208,7 +227,7 @@ function essai() {
 function noter(v, trouve) {
   clearTimeout(minuteur);
   const temps = Math.round((performance.now() - debut) / 100) / 10;
-  resultats.push({ id: v.id, trouve, temps, rates: rates.slice() });
+  resultats.push({ id: v.id, mot: v.mot, trouve, temps, rates: rates.slice() });
   n++;
   const bien = $("bien");
   bien.querySelector("div").lastChild.textContent = trouve ? " Merci" : " Pas grave, on passe au suivant";
@@ -228,7 +247,7 @@ $("faux").addEventListener("pointerdown", (e) => {
 $("consigne").addEventListener("pointerdown", () => { if (!fini) rates.push("consigne"); });
 
 function resume() {
-  const lignes = resultats.map(r => `${r.id}: ${r.trouve ? r.temps + "s" : "PAS TROUVÉ"}${r.rates.length ? " | à côté x" + r.rates.length + " (" + r.rates.join(",") + ")" : ""}`);
+  const lignes = resultats.map(r => `${r.id} [${r.mot}]: ${r.trouve ? r.temps + "s" : "PAS TROUVÉ"}${r.rates.length ? " | à côté x" + r.rates.length + " (" + r.rates.join(",") + ")" : ""}`);
   return "TEST BOUTONS\n" + lignes.join("\n");
 }
 
