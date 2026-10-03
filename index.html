@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Petit test des boutons</title>
+<style>
+  :root {
+    --fond: #ffffff;
+    --texte: #1c1c1e;
+    --gris: #8e8e93;
+    --gris-clair: #f2f2f7;
+    --trait: #d1d1d6;
+    --orange: #d9822b;
+    --vert: #1d6b4a;
+    --bleu: #007aff;
+    --consigne: #fff7ec;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--fond); color: var(--texte);
+    font-family: -apple-system, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px; line-height: 1.35;
+    touch-action: manipulation; overflow: hidden;
+    -webkit-user-select: none; user-select: none;
+  }
+  .ecran { position: fixed; inset: 0; display: none; flex-direction: column; }
+  .ecran.actif { display: flex; }
+
+  /* --- écrans d'accueil et de fin (pour la personne) --- */
+  .page-calme { padding: 48px 24px 32px; justify-content: center; text-align: center; gap: 24px; background: var(--consigne); }
+  .page-calme h1 { font-size: 30px; margin: 0; }
+  .page-calme p { font-size: 22px; margin: 0; }
+  .gros-bouton {
+    font: inherit; font-size: 24px; font-weight: 700; border: 0; border-radius: 16px;
+    padding: 20px 24px; background: var(--vert); color: #fff; width: 100%;
+  }
+
+  /* --- la bande de consigne, toujours la même --- */
+  .consigne {
+    flex: none; background: var(--consigne); border-bottom: 2px solid #eadfce;
+    padding: calc(env(safe-area-inset-top) + 14px) 18px 14px; font-size: 22px; font-weight: 600; text-align: center;
+  }
+
+  /* --- le faux écran de téléphone --- */
+  .faux { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .barre { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--trait); }
+  .barre .retour { color: var(--bleu); font-size: 17px; }
+  .barre .titre { font-weight: 600; }
+  .barre .icones { display: flex; gap: 14px; }
+  .barre svg { width: 22px; height: 22px; stroke: var(--bleu); fill: none; stroke-width: 2; }
+  .contenu { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .contenu h2 { font-size: 22px; margin: 0; }
+  .contenu p { margin: 0; color: #3a3a3c; }
+  .carte { background: var(--gris-clair); border-radius: 12px; padding: 12px; display: flex; gap: 12px; align-items: center; }
+  .carte .vignette { width: 52px; height: 52px; border-radius: 10px; flex: none; }
+  .carte small { color: var(--gris); display: block; }
+  .liens { display: flex; justify-content: space-between; font-size: 15px; color: var(--bleu); }
+  .petit-gris { font-size: 13px; color: var(--gris); }
+  .zone-bas { padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .secondaire { font: inherit; background: none; border: 0; color: var(--gris); font-size: 16px; padding: 6px; }
+
+  /* --- les boutons testés (la cible) --- */
+  .cible { font: inherit; font-size: 17px; font-weight: 600; border: 0; cursor: pointer; }
+  .v-plein { border-radius: 12px; padding: 14px 20px; color: #fff; }
+  .v-large { width: 100%; }
+  .v-petit { padding: 8px 14px; font-size: 15px; border-radius: 8px; }
+  .c-orange { background: var(--orange); }
+  .c-noir { background: #1c1c1e; }
+  .c-vert { background: var(--vert); }
+  .c-bleu { background: var(--bleu); }
+  .c-gris { background: #e5e5ea; color: #3a3a3c; }
+  .v-contour { background: transparent; color: var(--orange); border: 2px solid var(--orange); border-radius: 12px; padding: 12px 20px; }
+  .v-lien { background: none; color: var(--bleu); padding: 6px; font-weight: 400; }
+  .v-ombre { box-shadow: 0 6px 0 #9c5b1c, 0 10px 18px rgba(0,0,0,.25); }
+  .v-geant { font-size: 24px; padding: 22px 20px; border-radius: 16px; }
+
+  /* --- retour calme après un bon toucher --- */
+  .bien { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(255,255,255,.92); z-index: 10; }
+  .bien.visible { display: flex; }
+  .bien div { text-align: center; font-size: 24px; font-weight: 600; color: var(--vert); }
+  .bien svg { width: 64px; height: 64px; display: block; margin: 0 auto 8px; }
+
+  /* --- le détail pour Luc --- */
+  #detail { display: none; text-align: left; font-size: 14px; background: #fff; border-radius: 12px; padding: 12px; max-height: 40vh; overflow: auto; white-space: pre-wrap; font-family: ui-monospace, Menlo, monospace; }
+  .lien-discret { font: inherit; background: none; border: 0; color: var(--gris); font-size: 15px; text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- Accueil -->
+<section class="ecran page-calme actif" id="accueil">
+  <h1>Petit test pour Luc</h1>
+  <p>Vous allez voir une douzaine d'écrans de téléphone.</p>
+  <p>Sur chacun, une phrase en haut vous dit <b>quoi toucher</b>.</p>
+  <p>Prenez votre temps. <b>Ce n'est pas vous qu'on teste, ce sont les écrans.</b></p>
+  <button class="gros-bouton" id="commencer">Commencer</button>
+</section>
+
+<!-- L'écran d'essai (rempli par le script) -->
+<section class="ecran" id="essai">
+  <div class="consigne" id="consigne"></div>
+  <div class="faux" id="faux"></div>
+</section>
+
+<!-- Fin -->
+<section class="ecran page-calme" id="fin">
+  <h1>Merci, c'est fini !</h1>
+  <p>Vous avez beaucoup aidé Luc.</p>
+  <p id="phrase-envoi">Touchez le bouton vert pour lui envoyer le résultat par message.</p>
+  <button class="gros-bouton" id="envoyer">Envoyer à Luc</button>
+  <button class="lien-discret" id="voir">Voir le détail</button>
+  <div id="detail"></div>
+</section>
+
+<div class="bien" id="bien"><div>
+  <svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#e3f1ea"/><path d="M19 33l9 9 17-19" stroke="#1d6b4a" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  Merci
+</div></div>
+
+<script>
+// Les variantes testées. Chaque essai = un faux écran rempli + un seul bon bouton.
+// pos : où se trouve le bouton (haut / milieu / bas). cls : son apparence.
+const VARIANTES = [
+  { id: "orange-large-bas",   pos: "bas",    cls: "v-plein v-large c-orange" },
+  { id: "orange-petit-milieu",pos: "milieu", cls: "v-plein v-petit c-orange" },
+  { id: "noir-large-bas",     pos: "bas",    cls: "v-plein v-large c-noir" },
+  { id: "vert-large-bas",     pos: "bas",    cls: "v-plein v-large c-vert" },
+  { id: "bleu-large-bas",     pos: "bas",    cls: "v-plein v-large c-bleu" },
+  { id: "contour-orange-bas", pos: "bas",    cls: "v-contour v-large" },
+  { id: "lien-bleu-bas",      pos: "bas",    cls: "v-lien" },
+  { id: "orange-fleche-bas",  pos: "bas",    cls: "v-plein v-large c-orange", fleche: true },
+  { id: "orange-relief-bas",  pos: "bas",    cls: "v-plein v-large c-orange v-ombre" },
+  { id: "orange-large-haut",  pos: "haut",   cls: "v-plein v-large c-orange" },
+  { id: "gris-large-bas",     pos: "bas",    cls: "v-plein v-large c-gris" },
+  { id: "orange-geant-bas",   pos: "bas",    cls: "v-plein v-large c-orange v-geant" },
+];
+
+// Des contenus variés pour que les écrans ne se ressemblent pas (rien d'inquiétant, rien qui imite une arnaque).
+const CONTENUS = [
+  { titre: "Météo", h: "Demain à Rennes", p: "Éclaircies l'après-midi, 17 degrés. Pensez à prendre une petite veste le matin.", carte: ["Samedi", "Soleil et nuages"], couleur: "#ffd27a" },
+  { titre: "Recettes", h: "Tarte aux pommes", p: "Une recette facile, prête en 45 minutes. Il vous faut 4 pommes, une pâte brisée et un peu de sucre.", carte: ["Temps de cuisson", "35 minutes"], couleur: "#f4b183" },
+  { titre: "Photos", h: "Vos photos de la semaine", p: "12 nouvelles photos ont été ajoutées à votre album « Jardin ».", carte: ["Album Jardin", "12 photos"], couleur: "#a8d5ba" },
+  { titre: "Bibliothèque", h: "Votre livre est arrivé", p: "Le livre que vous avez réservé vous attend à l'accueil jusqu'au 15 octobre.", carte: ["Horaires", "Mardi au samedi"], couleur: "#c9b6e4" },
+  { titre: "Jardinage", h: "Planter les bulbes", p: "C'est le bon moment pour planter les tulipes : à 10 centimètres de profondeur, pointe vers le haut.", carte: ["Conseil du jour", "Arroser peu"], couleur: "#b5d99c" },
+  { titre: "Radio", h: "L'émission du matin", p: "Écoutez l'émission d'hier sur l'histoire des chansons françaises, quand vous voulez.", carte: ["Durée", "52 minutes"], couleur: "#9ec5e8" },
+  { titre: "Mots croisés", h: "La grille du jour", p: "Une nouvelle grille facile vous attend. Vous pouvez vous arrêter et reprendre plus tard.", carte: ["Niveau", "Facile"], couleur: "#f7c6c7" },
+  { titre: "Marché", h: "Le marché de samedi", p: "Le marché se tient place de la mairie de 8 heures à 13 heures, même s'il pleut.", carte: ["Producteurs", "24 stands"], couleur: "#ffe59a" },
+  { titre: "Cinéma", h: "La séance de jeudi", p: "Un film en version française, séance à 14 h 30, tarif réduit pour les plus de 60 ans.", carte: ["Durée", "1 h 50"], couleur: "#d6c3a5" },
+  { titre: "Randonnée", h: "La balade du dimanche", p: "Un parcours plat de 5 kilomètres le long du canal, départ devant l'église.", carte: ["Durée", "1 h 30 à pied"], couleur: "#a9d6d3" },
+  { titre: "Famille", h: "L'anniversaire de Léa", p: "N'oubliez pas : Léa fête ses 9 ans dimanche. Elle adore les livres sur les animaux.", carte: ["Dimanche", "À 12 h"], couleur: "#f9cba7" },
+  { titre: "Santé", h: "Bien dormir", p: "Quelques conseils simples : se coucher à heure fixe et éviter les écrans le soir.", carte: ["Article", "3 minutes de lecture"], couleur: "#c5d8f2" },
+];
+
+const MOT = "Continuer";
+const ATTENTE_MAX = 30000; // 30 secondes sans trouver : on passe, sans reproche
+const ICONES = `<span class="icones"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M16 16l5 5"/></svg><svg viewBox="0 0 24 24"><path d="M6 17V11a6 6 0 0 1 12 0v6l2 2H4z"/><path d="M10 21h4"/></svg></span>`;
+
+function melanger(t) { t = t.slice(); for (let i = t.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [t[i], t[j]] = [t[j], t[i]]; } return t; }
+
+const ordre = melanger(VARIANTES);
+const contenus = melanger(CONTENUS);
+const resultats = [];
+let n = 0, debut = 0, rates = [], minuteur = null, fini = false;
+
+const $ = (id) => document.getElementById(id);
+function montrer(id) { document.querySelectorAll(".ecran").forEach(e => e.classList.toggle("actif", e.id === id)); }
+
+function boutonCible(v) {
+  const fleche = v.fleche ? " &rarr;" : "";
+  return `<button class="cible ${v.cls}" data-cible="1">${MOT}${fleche}</button>`;
+}
+
+function construire(v, c) {
+  const cible = boutonCible(v);
+  const haut = v.pos === "haut" ? `<div style="padding:12px 16px 0">${cible}</div>` : "";
+  const milieu = v.pos === "milieu" ? `<div>${cible}</div>` : "";
+  const bas = v.pos === "bas" ? cible : "";
+  return `
+    <div class="barre"><span class="retour" data-quoi="retour">&lsaquo; Retour</span><span class="titre">${c.titre}</span>${ICONES}</div>
+    ${haut}
+    <div class="contenu">
+      <h2>${c.h}</h2>
+      <p>${c.p}</p>
+      ${milieu}
+      <div class="carte" data-quoi="carte"><div class="vignette" style="background:${c.couleur}"></div><div><b>${c.carte[0]}</b><small>${c.carte[1]}</small></div></div>
+      <div class="liens"><span data-quoi="lien-gauche">En savoir plus</span><span data-quoi="lien-droite">Partager</span></div>
+      <p>Vous pouvez retrouver ces informations à tout moment dans cette page. Elles sont mises à jour chaque matin.</p>
+      <div class="carte" data-quoi="carte-2"><div class="vignette" style="background:#e5e5ea"></div><div><b>À voir aussi</b><small>Les autres idées de la semaine</small></div></div>
+      <p class="petit-gris">Mis à jour aujourd'hui</p>
+    </div>
+    <div class="zone-bas">${bas}<button class="secondaire" data-quoi="plus-tard">Plus tard</button></div>`;
+}
+
+function essai() {
+  if (n >= ordre.length) return terminer();
+  const v = ordre[n], c = contenus[n % contenus.length];
+  $("consigne").textContent = `Touchez le bouton « ${MOT} »`;
+  $("faux").innerHTML = construire(v, c);
+  rates = [];
+  montrer("essai");
+  debut = performance.now();
+  clearTimeout(minuteur);
+  minuteur = setTimeout(() => noter(v, false), ATTENTE_MAX);
+}
+
+function noter(v, trouve) {
+  clearTimeout(minuteur);
+  const temps = Math.round((performance.now() - debut) / 100) / 10;
+  resultats.push({ id: v.id, trouve, temps, rates: rates.slice() });
+  n++;
+  const bien = $("bien");
+  bien.querySelector("div").lastChild.textContent = trouve ? " Merci" : " Pas grave, on passe au suivant";
+  bien.classList.add("visible");
+  setTimeout(() => { bien.classList.remove("visible"); essai(); }, trouve ? 900 : 2200);
+}
+
+// Un seul écouteur : on distingue le bon bouton de tout le reste.
+$("faux").addEventListener("pointerdown", (e) => {
+  if (fini || $("bien").classList.contains("visible")) return;
+  const v = ordre[n];
+  if (e.target.closest("[data-cible]")) { noter(v, true); return; }
+  const quoi = e.target.closest("[data-quoi]");
+  rates.push(quoi ? quoi.dataset.quoi : "ailleurs");
+});
+// Toucher la consigne compte aussi comme un essai à côté.
+$("consigne").addEventListener("pointerdown", () => { if (!fini) rates.push("consigne"); });
+
+function resume() {
+  const lignes = resultats.map(r => `${r.id}: ${r.trouve ? r.temps + "s" : "PAS TROUVÉ"}${r.rates.length ? " | à côté x" + r.rates.length + " (" + r.rates.join(",") + ")" : ""}`);
+  return "TEST BOUTONS\n" + lignes.join("\n");
+}
+
+function terminer() {
+  fini = true;
+  const texte = resume();
+  $("detail").textContent = texte;
+  try { localStorage.setItem("test-boutons-" + Date.now(), texte); } catch (e) {}
+  // Le numéro de Luc est passé dans l'adresse après le # (jamais écrit dans la page) : ...index.html#luc=0612345678
+  const luc = (location.hash.match(/luc=([+0-9]+)/) || [])[1];
+  if (!luc) { $("envoyer").style.display = "none"; $("phrase-envoi").textContent = "Montrez cet écran à Luc."; $("detail").style.display = "block"; $("voir").style.display = "none"; }
+  $("envoyer").onclick = () => { location.href = `sms:${luc}&body=${encodeURIComponent(texte)}`; };
+  montrer("fin");
+}
+
+$("commencer").onclick = essai;
+$("voir").onclick = () => { const d = $("detail"); d.style.display = d.style.display === "block" ? "none" : "block"; };
+</script>
+</body>
+</html>
