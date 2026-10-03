@@ -25,7 +25,9 @@
     touch-action: manipulation; overflow: hidden;
     -webkit-user-select: none; user-select: none;
   }
-  .ecran { position: fixed; inset: 0; display: none; flex-direction: column; }
+  /* Hauteur = la partie vraiment visible de l'écran (dvh), barres du navigateur déduites :
+     sinon, dans Chrome / Comet sur iPhone, la barre du bas cache les boutons. */
+  .ecran { position: fixed; top: 0; left: 0; right: 0; height: 100vh; height: 100dvh; display: none; flex-direction: column; }
   .ecran.actif { display: flex; }
 
   /* --- écrans d'accueil et de fin (pour la personne) --- */
@@ -44,13 +46,14 @@
   }
 
   /* --- le faux écran de téléphone --- */
-  .faux { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .faux { flex: 1; min-height: 0; position: relative; overflow: hidden; display: flex; flex-direction: column; }
   .barre { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--trait); }
   .barre .retour { color: var(--bleu); font-size: 17px; }
   .barre .titre { font-weight: 600; }
   .barre .icones { display: flex; gap: 14px; }
   .barre svg { width: 22px; height: 22px; stroke: var(--bleu); fill: none; stroke-width: 2; }
-  .contenu { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  /* Le contenu se laisse couper en bas si l'écran est petit : les boutons, eux, restent toujours visibles. */
+  .contenu { padding: 16px; display: flex; flex-direction: column; gap: 12px; flex: 1; min-height: 0; overflow: hidden; }
   .contenu h2 { font-size: 22px; margin: 0; }
   .contenu p { margin: 0; color: #3a3a3c; }
   .carte { background: var(--gris-clair); border-radius: 12px; padding: 12px; display: flex; gap: 12px; align-items: center; }
@@ -58,7 +61,7 @@
   .carte small { color: var(--gris); display: block; }
   .liens { display: flex; justify-content: space-between; font-size: 15px; color: var(--bleu); }
   .petit-gris { font-size: 13px; color: var(--gris); }
-  .zone-bas { padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px); display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .zone-bas { flex: none; padding: 12px 16px calc(env(safe-area-inset-bottom) + 16px); display: flex; flex-direction: column; gap: 10px; align-items: center; background: var(--fond); }
   .secondaire { font: inherit; background: none; border: 0; color: var(--gris); font-size: 16px; padding: 6px; }
 
   /* --- les boutons testés (la cible) --- */
